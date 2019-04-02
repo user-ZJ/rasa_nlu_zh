@@ -37,6 +37,7 @@ from rasa_nlu.model import Metadata
 from rasa_nlu.tokenizers.mitie_tokenizer import MitieTokenizer
 from rasa_nlu.tokenizers.spacy_tokenizer import SpacyTokenizer
 from rasa_nlu.tokenizers.jieba_tokenizer import JiebaTokenizer
+from rasa_nlu.tokenizers.pkuseg_tokenizer import PkusegTokenizer
 from rasa_nlu.tokenizers.whitespace_tokenizer import WhitespaceTokenizer
 from rasa_nlu.utils.mitie_utils import MitieNLP
 from rasa_nlu.utils.spacy_utils import SpacyNLP
@@ -54,7 +55,7 @@ component_classes = [
     EntitySynonymMapper,
     SpacyFeaturizer, MitieFeaturizer, NGramFeaturizer, RegexFeaturizer,
     CountVectorsFeaturizer,
-    MitieTokenizer, SpacyTokenizer, WhitespaceTokenizer, JiebaTokenizer,
+    MitieTokenizer, SpacyTokenizer, WhitespaceTokenizer, JiebaTokenizer,PkusegTokenizer,
     SklearnIntentClassifier, MitieIntentClassifier, KeywordIntentClassifier,
     EmbeddingIntentClassifier
 ]
