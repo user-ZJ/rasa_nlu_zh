@@ -7,6 +7,7 @@ import glob
 import logging
 import os
 import shutil
+import pkuseg
 
 from rasa_nlu.components import Component
 from rasa_nlu.config import RasaNLUModelConfig
@@ -16,7 +17,7 @@ from typing import Any, List, Text
 
 logger = logging.getLogger(__name__)
 
-PKUSEG_CUSTOM_DICTIONARY_PATH = "tokenizer_pkuseg"
+PKUSEG_CUSTOM_DICTIONARY_PATH = "tokenizer_pkuseg/userdict.txt"
 
 
 class PkusegTokenizer(Tokenizer, Component):
@@ -44,28 +45,14 @@ class PkusegTokenizer(Tokenizer, Component):
 
         # load dictionary
         if self.dictionary_path is not None:
-            self.load_custom_dictionary(self.dictionary_path)
+            self.seg = pkuseg.pkuseg(user_dict=self.dictionary_path)
+        else:
+            self.seg = pkuseg.pkuseg()
 
     @classmethod
     def required_packages(cls):
         # type: () -> List[Text]
         return ["pkuseg"]
-
-    @staticmethod
-    def load_custom_dictionary(path):
-        # type: (Text) -> None
-        """Load all the custom dictionaries stored in the path.
-
-        More information about the dictionaries file format can
-        be found in the documentation of pkuseg.
-        """
-        import pkuseg
-
-        pkuseg_userdicts = glob.glob("{}/*".format(path))
-        for pkuseg_userdict in pkuseg_userdicts:
-            logger.info("Loading Pkuseg User Dictionary at "
-                        "{}".format(pkuseg_userdict))
-            pkuseg.load_userdict(pkuseg_userdict)
 
     def train(self, training_data, config, **kwargs):
         # type: (TrainingData, RasaNLUModelConfig, **Any) -> None
@@ -78,9 +65,8 @@ class PkusegTokenizer(Tokenizer, Component):
 
     def tokenize(self, text):
         # type: (Text) -> List[Token]
-        import pkuseg
-        seg = pkuseg.pkuseg()
-        words = seg.cut(text)
+
+        words = self.seg.cut(text)
         tokens = []
         running_offset = 0
         for word in words:
@@ -111,14 +97,11 @@ class PkusegTokenizer(Tokenizer, Component):
         return cls(meta)
 
     @staticmethod
-    def copy_files_dir_to_dir(input_dir, output_dir):
+    def copy_files(input_file, output_file):
         # make sure target path exists
-        if not os.path.exists(output_dir):
-            os.makedirs(output_dir)
-
-        target_file_list = glob.glob("{}/*".format(input_dir))
-        for target_file in target_file_list:
-            shutil.copy2(target_file, output_dir)
+        if not os.path.exists(os.path.dirname(output_file)):
+            os.makedirs(os.path.dirname(output_file))
+        shutil.copy2(input_file, output_file)
 
     def persist(self, model_dir):
         # type: (Text) -> Optional[Dict[Text, Any]]
@@ -130,7 +113,7 @@ class PkusegTokenizer(Tokenizer, Component):
         if self.dictionary_path is not None:
             target_dictionary_path = os.path.join(model_dir,
                                                   PKUSEG_CUSTOM_DICTIONARY_PATH)
-            self.copy_files_dir_to_dir(self.dictionary_path,
+            self.copy_files(self.dictionary_path,
                                        target_dictionary_path)
 
             # set dictionary_path of model metadata to relative path
