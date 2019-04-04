@@ -42,10 +42,15 @@ class PkusegTokenizer(Tokenizer, Component):
 
         # path to dictionary file or None
         self.dictionary_path = self.component_config.get('dictionary_path')
+        self.model_path = self.component_config.get('model_path')
 
-        # load dictionary
-        if self.dictionary_path is not None:
+        # load dictionary and model
+        if self.dictionary_path is not None and self.model_path is not None:
+            self.seg = pkuseg.pkuseg(user_dict=self.dictionary_path,model_name=self.model_path)
+        elif self.dictionary_path is not None:
             self.seg = pkuseg.pkuseg(user_dict=self.dictionary_path)
+        elif self.model_path is not None:
+            self.seg = pkuseg.pkuseg(model_name=self.model_path)
         else:
             self.seg = pkuseg.pkuseg()
 
